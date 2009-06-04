@@ -7,7 +7,6 @@ import XMonad.Layout.Tabbed
 import XMonad.Layout.Grid
 import XMonad.Layout.NoBorders
 import XMonad.Layout.Cross
--- import XMonad.Layout.LayoutModifier
 import XMonad.Layout.SimplestFloat
 import XMonad.Layout.Maximize
 import XMonad.Hooks.ManageHelpers
@@ -22,6 +21,7 @@ import qualified Data.Map        as M
 myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     [ ((modMask,               xK_Return), spawn $ XMonad.terminal conf)
     , ((modMask,               xK_g     ), spawn "gmrun")
+    , ((modMask .|. shiftMask, xK_x     ), spawn "sudo shutdown -h now")
     , ((modMask,               xK_f     ), spawn "firefox")
     , ((modMask,               xK_o     ), spawn "geany ~/.xmonad/xmonad.hs")
     , ((modMask .|. shiftMask, xK_m     ), spawn "sudo shutdown -h now")
@@ -70,8 +70,8 @@ myLayout = avoidStruts (tabbed shrinkText myTabConfig ||| noBorders tall ||| Mir
      delta   = 2/100
 
 myTabConfig = defaultTheme {
-activeColor = "#BBBFA1"
-,inactiveColor = "#222222"
+activeColor = "#CDD4B2"
+,inactiveColor = "#806E62"
 ,urgentColor = "#ffffff"
 ,activeBorderColor = "#777777"
 ,inactiveBorderColor = "#777777"
@@ -82,22 +82,32 @@ activeColor = "#BBBFA1"
 ,decoHeight = 21
 } 
 
+myWorkspaces            :: [String]			 									      
+myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 0 [ "B","C","D","E","F"]
+
+  where nWorkspaces n []= map show [1 .. n]
+        nWorkspaces n l = init l ++ map show [length l .. n] ++ [last l] 
+        clickable l     = [ "^ca(1,xdotool key alt+" ++ show (n) ++ ")" ++ ws ++ "^ca()" |
+                            (i,ws) <- zip [1..] l,
+                            let n = if i == 0 then 0 else i ] -- needed for 10 workspaces
 myManageHook = composeAll
 			[ className =? "Gmrun"          --> doCenterFloat
-			, className =? "Gran Paradiso"  --> doF (W.shift "^ca(1,ws2) C  ^ca()")
+			, className =? "Gran Paradiso"  --> doF (W.shift (myWorkspaces !! 1)) --W.shift "^ca(1,xdotool key alt+2) C  ^ca()"
 			, className =? "Gcolor2"        --> doCenterFloat
 			, className =? "VLC (XVideo output)"   --> doFullFloat
 			, className =? "Gimp"           --> doFloat
 			, resource  =? "desktop_window" --> doIgnore]
  
 myLogHook h = dynamicLogWithPP $ defaultPP {
-			  ppCurrent  = dzenColor "black" "#BBBFA1" 
-            , ppHidden   = dzenColor "#BBBFA1" "#222222" 
-            , ppUrgent   = dzenColor "#D8332C" "#2E2611"
-            , ppHiddenNoWindows = dzenColor "#444444"  "#222222"
+-- dzenColor "black" "#CDD4B2"
+-- dzenColor "#CDD4B2" "#222222" . pad 
+			  ppCurrent  = dzenColor "#806E62" "#CDD4B2"  . pad
+            , ppHidden   = dzenColor "#CDD4B2" "#806E62"  . pad
+            , ppUrgent   = dzenColor "#D8332C" "#2E2611" . pad
+            , ppHiddenNoWindows = dzenColor "#444444"  "#806E62" . pad
             , ppWsSep    = "^fg(black)^r(1x17)"
             , ppSep      = "^fg(black)^r(1x17)"
-            , ppLayout   = dzenColor "#BBBFA1" "#222222" .
+            , ppLayout   = dzenColor "#CDD4B2" "#806E62" .
                            (\ x -> fill (case x of
                        "Grid"		        -> icon "grid.xbm" 
                        "Tabbed Simplest"    -> icon "tabbed.xbm"
@@ -106,22 +116,22 @@ myLogHook h = dynamicLogWithPP $ defaultPP {
                        "SimplestFloat"      -> icon "float.xbm"	
                        "Full"               -> icon "full.xbm"
                        _                    -> pad x) 4)
-	    , ppTitle	= ("^fn(-*-dina-*-r-*-*-14-*-*-*-*-*-iso8859-1)^fg(#F6F7F1) " ++) . dzenEscape
-        , ppOutput   = hPutStrLn h
+	        , ppTitle	= ("^fn(Deja Vu Sans Mono-9)^fg(#F6F7F1) " ++) . dzenEscape
+            , ppOutput   = hPutStrLn h
             }
     where
       icon h = "^i(/home/edgar/dzen_bitmaps/" ++ h ++ ")"
       fill :: String -> Int -> String
-      fill h i = "^ca(1,wss)^p(" ++ show i ++ ")" ++ h ++ "^p(" ++ show i ++ ")^ca()"
-									 									      
-myStatusBar = "dzen2 -fn 'Numberpile-12' -bg '#222222' -h 17 -ta l -w 800 -e ''"
+      fill h i = "^ca(1,xdotool key alt+space)^p(" ++ show i ++ ")" ++ h ++ "^p(" ++ show i ++ ")^ca()"
 
-secondDzenCommand = "conky -c ~/.xdzenconky | dzen2 -fn '-*-dina-*-r-*-*-14-*-*-*-*-*-iso8859-1' -bg '#222222' -h 17 -ta r -w 1280 -e '' -x 800"  
+myStatusBar = "dzen2 -fn 'Numberpile-12' -bg '#806E62' -h 17 -ta l -w 800 -e ''"
 
+secondDzenCommand = "conky -c ~/.xdzenconky | dzen2 -fn 'Deja Vu Sans Mono-9' -bg '#806E62' -h 17 -ta r -w 1280 -e '' -x 800"  
+-- -*-dina-*-r-*-*-14-*-*-*-*-*-iso8859-1
 main = do din <- spawnPipe myStatusBar
 	  spawnPipe secondDzenCommand
           
-          xmonad $  withUrgencyHook NoUrgencyHook
+          xmonad $  withUrgencyHook dzenUrgencyHook { args = [ "-fn", "Dina-10", "-x", "420", "-w", "350", "-fg", "orange", "-bg", "#222222" ] }
 					defaultConfig {
           terminal           = "urxvtc",
           focusFollowsMouse  = True,
@@ -129,9 +139,8 @@ main = do din <- spawnPipe myStatusBar
           modMask            = mod1Mask,
           numlockMask        = mod2Mask,
 
-          workspaces         = "^ca(1,ws1) B  ^ca()":"^ca(1,ws2) C  ^ca()":"^ca(1,ws3) D  ^ca()":"^ca(1,ws4) E  ^ca()":"^fn(Bands & Artists-11)^ca(1,ws5) j  ^ca()":[],
---          workspaces         = " B  ":" C  ":" D  ":" E  ":" j  ":[],
-          normalBorderColor  = "#BBBFA1",
+          workspaces         = myWorkspaces,
+          normalBorderColor  = "#CDD4B2",
           focusedBorderColor = "white",        
      
           -- key bindings
@@ -143,14 +152,3 @@ main = do din <- spawnPipe myStatusBar
           manageHook         = myManageHook,
           logHook            = myLogHook din     
           }
-			  --ppVisible = f
-
-              --ws = ["A", "B", "C"]
-
-              --f s = "^ca(1,ws" ++ (show i) ++ ")" ++ s ++ "^ca()"
-                 --where
-                   --i = fromJust $ elemIndex s ws
-      --cap s i = "^ca(1,ws" ++ (show i) ++ ")" ++ s ++ "^ca()"
-	          --where
-			    --ws = " B  ":" C  ":" D  ":" E  ":" j  ":[]    
-                   --i = fromJust $ elemIndex s ws
