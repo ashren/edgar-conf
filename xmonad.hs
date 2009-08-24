@@ -3,14 +3,21 @@ import System.Exit
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
 import XMonad.Util.Run (spawnPipe,hPutStrLn)
+import XMonad.Layout.NoBorders (smartBorders)
+import XMonad.Layout.DragPane
+import XMonad.Layout.LayoutCombinators hiding ((|||))
+import XMonad.Hooks.XPropManage
+import XMonad.Layout.Named
 import XMonad.Layout.Tabbed
 import XMonad.Layout.Grid
-import XMonad.Layout.NoBorders
-import XMonad.Layout.Cross
 import XMonad.Layout.SimplestFloat
 import XMonad.Layout.Maximize
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.UrgencyHook
+import XMonad.Layout.ResizableTile
+import XMonad.Actions.GridSelect
+import XMonad.Layout.PerWorkspace
+import XMonad.Layout.Reflect
 import XMonad.Prompt
 import XMonad.Prompt.Shell
 import Data.List
@@ -26,6 +33,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask,               xK_o     ), spawn "geany ~/.xmonad/xmonad.hs")
     , ((modMask .|. shiftMask, xK_m     ), spawn "sudo shutdown -h now")
     , ((modMask,               xK_w     ), spawn "/usr/lib/wicd/gui.py")
+	, ((modMask,               xK_z     ), goToSelected defaultGSConfig)
     , ((modMask .|. shiftMask, xK_c     ), kill)
     , ((modMask,               xK_space ), sendMessage NextLayout)
     , ((modMask .|. shiftMask, xK_space ), setLayout $ XMonad.layoutHook conf)
@@ -46,7 +54,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask,               xK_t     ), withFocused $ windows . W.sink)
     , ((modMask,               xK_backslash), withFocused (sendMessage . maximizeRestore))
     , ((modMask,               xK_x     ), shellPrompt defaultXPConfig)
-    , ((modMask,               xK_b     ), spawn "bat | gdbar -ss 1  -h 10 -w 90 -fg 'orange' -bg '#222222' | dzen2 -p 3 -w 90 -h 10 -x 1188 -y 18")
+    , ((modMask,               xK_b     ), spawn "bat")
     , ((modMask .|. shiftMask, xK_b     ), sendMessage ToggleStruts)
     , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess))
     , ((modMask,               xK_q     ), spawn "killall dzen2 && killall conky" >> restart "xmonad" True)
@@ -61,26 +69,66 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask, button2), (\w -> focus w >> windows W.swapMaster))
     , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w))
     ]
- 
-myLayout = avoidStruts (tabbed shrinkText myTabConfig ||| noBorders tall ||| Mirror tall ||| Grid ||| Full ||| simplestFloat ||| simpleCross)
-  where
-     tall   = Tall nmaster delta ratio
-     nmaster = 1
-     ratio   = 1/2
-     delta   = 2/100
+
+		 
+appFontXft :: String
+appFontXft = concat [ "xft:"
+                     ,"Sans:"
+					 ,"pixelsize=11:"
+					 ,"weight=regular:"
+					 ,"width=semicondensed:"
+					 ,"dpi=96:hinting=true:"
+					 ,"hintstyle=hintslight:"
+					 ,"antialias=true:"
+					 ,"rgba=rgb:"
+					 ,"lcdfilter=lcdlight"]
+					 
+dzenAppFontXft :: String
+dzenAppFontXft = concat [ "'^fn("
+                     ,"xft:"
+                     ,"Sans:"
+					 ,"pixelsize=11:"
+					 ,"weight=regular:"
+					 ,"width=semicondensed:"
+					 ,"dpi=96:hinting=true:"
+					 ,"hintstyle=hintslight:"
+					 ,"antialias=true:"
+					 ,"rgba=rgb:"
+					 ,"lcdfilter=lcdlight)"
+					 ,"^fg(#F6F7F1)'"]
+					 
+--["xft", "Sans", "pixelsize=11", "weight=regular", "width=semicondensed", "dpi=96", "hinting=true", "hintstyle=hintslight", "antialias=true", "rgba=rgb", "lcdfilter=lcdlight"]
+
+-- appFont = zipWith (++) (ma#00D8FFp show [1..]) fntname
+--   where fntname = map ((:) ':') appFontXft
+	  
+tabbedLayout = tabbedBottomAlways shrinkText myTabConfig
+gimpLayout = named "gimp" (tabbedLayout ****||* Full)
+
+myLayout = avoidStruts $ 
+    (tabbedLayout ||| tall ||| Mirror tall ||| Full ||| simplestFloat ||| gimpLayout)
+     where
+         tall      = Tall nmaster delta ratio
+         nmaster   = 1
+         ratio     = 1/2
+         delta     = 2/100
+--myLayout = onWorkspace (myWorkspaces !! 3) gimpLayout $
+--             myLayouts  
 
 myTabConfig = defaultTheme {
-activeColor = "#CDD4B2"
-,inactiveColor = "#806E62"
+activeColor = "#806E62"
+,inactiveColor = "#CDD4B2"
 ,urgentColor = "#ffffff"
 ,activeBorderColor = "#777777"
 ,inactiveBorderColor = "#777777"
 ,activeTextColor = "black"
 ,inactiveTextColor = "white"
 ,urgentTextColor = "orange"
-,fontName = "xft:dina-12" 
+,fontName = appFontXft
+-- "xft:Sans:pixelsize=11:weight=regular:width=semicondensed:dpi=96:hinting=true:hintstyle=hintslight:antialias=true:rgba=rgb:lcdfilter=lcdlight"
 ,decoHeight = 21
 } 
+
 
 myWorkspaces            :: [String]			 									      
 myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 0 [ "B","C","D","E","F"]
@@ -92,12 +140,14 @@ myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 0 [ "B","C"
                             let n = if i == 0 then 0 else i ] -- needed for 10 workspaces
 myManageHook = composeAll
 			[ className =? "Gmrun"          --> doCenterFloat
-			, className =? "Gran Paradiso"  --> doF (W.shift (myWorkspaces !! 1)) --W.shift "^ca(1,xdotool key alt+2) C  ^ca()"
+			, className =? "Shiretoko"  --> doF (W.shift (myWorkspaces !! 1))
 			, className =? "Gcolor2"        --> doCenterFloat
 			, className =? "VLC (XVideo output)"   --> doFullFloat
-			, className =? "Gimp"           --> doFloat
-			, resource  =? "desktop_window" --> doIgnore]
- 
+			, className =? "Gimp"  --> doF (W.shift (myWorkspaces !! 3)) 
+			, resource  =? "desktop_window" --> doIgnore
+			]
+          where role = stringProperty "WM_WINDOW_ROLE"
+
 myLogHook h = dynamicLogWithPP $ defaultPP {
 -- dzenColor "black" "#CDD4B2"
 -- dzenColor "#CDD4B2" "#222222" . pad 
@@ -109,28 +159,28 @@ myLogHook h = dynamicLogWithPP $ defaultPP {
             , ppSep      = "^fg(black)^r(1x17)"
             , ppLayout   = dzenColor "#CDD4B2" "#806E62" .
                            (\ x -> fill (case x of
-                       "Grid"		        -> icon "grid.xbm" 
-                       "Tabbed Simplest"    -> icon "tabbed.xbm"
+                       "Tabbed Bottom Simplest"    -> icon "tabbed.xbm"
                        "Tall"               -> icon "tall.xbm"
                        "Mirror Tall"        -> icon "mtall.xbm"
                        "SimplestFloat"      -> icon "float.xbm"	
                        "Full"               -> icon "full.xbm"
+                       "gimp"               -> icon "full.xbm"
                        _                    -> pad x) 4)
-	        , ppTitle	= ("^fn(Deja Vu Sans Mono-9)^fg(#F6F7F1) " ++) . dzenEscape
+	        , ppTitle	= ("^fn(xft:Sans:pixelsize=11:weight=regular:width=semicondensed:dpi=96:hinting=true:hintstyle=hintslight:antialias=true:rgba=rgb:lcdfilter=lcdlight)^fg(#F6F7F1) " ++) . dzenEscape
             , ppOutput   = hPutStrLn h
             }
     where
       icon h = "^i(/home/edgar/dzen_bitmaps/" ++ h ++ ")"
       fill :: String -> Int -> String
       fill h i = "^ca(1,xdotool key alt+space)^p(" ++ show i ++ ")" ++ h ++ "^p(" ++ show i ++ ")^ca()"
-
+-- Numberpile-12
 myStatusBar = "dzen2 -fn 'Numberpile-12' -bg '#806E62' -h 17 -ta l -w 800 -e ''"
-
-secondDzenCommand = "conky -c ~/.xdzenconky | dzen2 -fn 'Deja Vu Sans Mono-9' -bg '#806E62' -h 17 -ta r -w 1280 -e '' -x 800"  
+-- myStatusBar = "dzen2 -ta l -w 800"
+-- secondDzenCommand = "date | dzen2 -ta r -x 800 -p"
+secondDzenCommand = "conky -c ~/.xdzenconky | dzen2 -fn " ++ appFontXft ++ " -bg '#806E62' -h 17 -ta r -w 1280 -e '' -x 800"  
 -- -*-dina-*-r-*-*-14-*-*-*-*-*-iso8859-1
 main = do din <- spawnPipe myStatusBar
-	  spawnPipe secondDzenCommand
-          
+	  spawnPipe secondDzenCommand     
           xmonad $  withUrgencyHook dzenUrgencyHook { args = [ "-fn", "Dina-10", "-x", "420", "-w", "350", "-fg", "orange", "-bg", "#222222" ] }
 					defaultConfig {
           terminal           = "urxvtc",
