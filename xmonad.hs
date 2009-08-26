@@ -122,15 +122,15 @@ activeColor = dzenColor4
 ,decoHeight = 21
 } 
 
-
-myWorkspaces            :: [String]			 									      
+-- Ws change by leftclick conf starts here:
+myWorkspaces            :: [String]
 myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 0 ["One","Two","Three","Four","Five"]
 
   where nWorkspaces n []= map show [1 .. n]
         nWorkspaces n l = init l ++ map show [length l .. n] ++ [last l] 
         clickable l     = [ "^ca(1,xdotool key alt+" ++ show (n) ++ ")" ++ ws ++ "^ca()" |
                             (i,ws) <- zip [1..] l,
-                            let n = if i == 0 then 0 else i ] -- needed for 10 workspaces
+                            let n = if i == 0 then 0 else i ]
 myManageHook = composeAll
 			[ className =? "Gmrun"          --> doCenterFloat
 			, className =? "Shiretoko"  --> doF (W.shift (myWorkspaces !! 1))
@@ -142,8 +142,6 @@ myManageHook = composeAll
           where role = stringProperty "WM_WINDOW_ROLE"
 
 myLogHook h = dynamicLogWithPP $ defaultPP {
--- dzenColor "black" "#CDD4B2"
--- dzenColor "#CDD4B2" "#222222" . pad 
 			  ppCurrent  = dzenColor dzenColor5 dzenColor2  . pad
             , ppHidden   = dzenColor dzenColor2 dzenColor4 . pad
             , ppUrgent   = dzenColor "#D8332C" "#2E2611" . pad
@@ -166,8 +164,6 @@ myLogHook h = dynamicLogWithPP $ defaultPP {
       icon h = "^i(/home/edgar/dzen_bitmaps/" ++ h ++ ")"
       fill :: String -> Int -> String
       fill h i = "^ca(1,xdotool key alt+space)^p(" ++ show i ++ ")" ++ h ++ "^p(" ++ show i ++ ")^ca()"
-
--- xft:Sans:pixelsize=11:width=semicondensed:hintstyle=hint
 
 myStatusBar = "dzen2 -fn " ++ appFontXft ++ " -bg '#0D171A' -h 17 -ta l -w 800 -e ''"
 secondDzenCommand = "conky -c ~/.xdzenconky | dzen2 -fn " ++ appFontXft ++ " -bg '#0D171A' -h 17 -ta r -w 1280 -e '' -x 800"  
