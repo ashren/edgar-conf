@@ -3,19 +3,18 @@ import System.Exit
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
 import XMonad.Util.Run (spawnPipe,hPutStrLn)
-import XMonad.Layout.NoBorders (smartBorders)
+import XMonad.Layout.NoBorders -- (smartBorders)
 import XMonad.Layout.DragPane
 import XMonad.Layout.LayoutCombinators hiding ((|||))
 import XMonad.Hooks.XPropManage
+import XMonad.Actions.GridSelect
 import XMonad.Layout.Named
 import XMonad.Layout.Tabbed
-import XMonad.Layout.Grid
 import XMonad.Layout.SimplestFloat
 import XMonad.Layout.Maximize
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.UrgencyHook
 import XMonad.Layout.ResizableTile
-import XMonad.Actions.GridSelect
 import XMonad.Layout.PerWorkspace
 import XMonad.Layout.Reflect
 import XMonad.Prompt
@@ -31,7 +30,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask .|. shiftMask, xK_x     ), spawn "sudo shutdown -h now")
     , ((modMask,               xK_f     ), spawn "firefox")
     , ((modMask,               xK_o     ), spawn "geany ~/.xmonad/xmonad.hs")
-    , ((modMask .|. shiftMask, xK_m     ), spawn "sudo shutdown -h now")
+    , ((modMask .|. shiftMask, xK_m     ), spawn "sudo reboot")
     , ((modMask,               xK_w     ), spawn "/usr/lib/wicd/gui.py")
 	, ((modMask,               xK_z     ), goToSelected defaultGSConfig)
     , ((modMask .|. shiftMask, xK_c     ), kill)
@@ -70,7 +69,20 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w))
     ]
 
-		 
+-- My colors and fonts
+
+dzenColor1 :: String
+dzenColor2 :: String
+dzenColor3 :: String
+dzenColor4 :: String
+dzenColor5 :: String
+
+dzenColor1 = "#F5F6F6" -- almost white
+dzenColor2 = "#D0EFF3" -- very light blue
+dzenColor3 = "#84D1E0" -- light blue
+dzenColor4 = "#4690BB" -- blue
+dzenColor5 = "#0D171A" -- dark
+
 appFontXft :: String
 appFontXft = concat [ "xft:"
                      ,"Sans:"
@@ -82,56 +94,37 @@ appFontXft = concat [ "xft:"
 					 ,"antialias=true:"
 					 ,"rgba=rgb:"
 					 ,"lcdfilter=lcdlight"]
-					 
-dzenAppFontXft :: String
-dzenAppFontXft = concat [ "'^fn("
-                     ,"xft:"
-                     ,"Sans:"
-					 ,"pixelsize=11:"
-					 ,"weight=regular:"
-					 ,"width=semicondensed:"
-					 ,"dpi=96:hinting=true:"
-					 ,"hintstyle=hintslight:"
-					 ,"antialias=true:"
-					 ,"rgba=rgb:"
-					 ,"lcdfilter=lcdlight)"
-					 ,"^fg(#F6F7F1)'"]
-					 
---["xft", "Sans", "pixelsize=11", "weight=regular", "width=semicondensed", "dpi=96", "hinting=true", "hintstyle=hintslight", "antialias=true", "rgba=rgb", "lcdfilter=lcdlight"]
 
--- appFont = zipWith (++) (ma#00D8FFp show [1..]) fntname
---   where fntname = map ((:) ':') appFontXft
-	  
+-- Layout Section
+
 tabbedLayout = tabbedBottomAlways shrinkText myTabConfig
 gimpLayout = named "gimp" (tabbedLayout ****||* Full)
 
-myLayout = avoidStruts $ 
-    (tabbedLayout ||| tall ||| Mirror tall ||| Full ||| simplestFloat ||| gimpLayout)
+myLayout = avoidStruts  $ 
+    (tabbedLayout ||| noBorders tall ||| Mirror tall ||| Full ||| simplestFloat ||| gimpLayout)
      where
          tall      = Tall nmaster delta ratio
          nmaster   = 1
          ratio     = 1/2
          delta     = 2/100
---myLayout = onWorkspace (myWorkspaces !! 3) gimpLayout $
---             myLayouts  
+
 
 myTabConfig = defaultTheme {
-activeColor = "#806E62"
-,inactiveColor = "#CDD4B2"
+activeColor = dzenColor4
+,inactiveColor = dzenColor5
 ,urgentColor = "#ffffff"
-,activeBorderColor = "#777777"
-,inactiveBorderColor = "#777777"
-,activeTextColor = "black"
-,inactiveTextColor = "white"
+,activeBorderColor = dzenColor2
+,inactiveBorderColor = "#594F4F"
+,activeTextColor = dzenColor5
+,inactiveTextColor = dzenColor1
 ,urgentTextColor = "orange"
 ,fontName = appFontXft
--- "xft:Sans:pixelsize=11:weight=regular:width=semicondensed:dpi=96:hinting=true:hintstyle=hintslight:antialias=true:rgba=rgb:lcdfilter=lcdlight"
 ,decoHeight = 21
 } 
 
 
 myWorkspaces            :: [String]			 									      
-myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 0 [ "B","C","D","E","F"]
+myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 0 ["One","Two","Three","Four","Five"]
 
   where nWorkspaces n []= map show [1 .. n]
         nWorkspaces n l = init l ++ map show [length l .. n] ++ [last l] 
@@ -151,37 +144,37 @@ myManageHook = composeAll
 myLogHook h = dynamicLogWithPP $ defaultPP {
 -- dzenColor "black" "#CDD4B2"
 -- dzenColor "#CDD4B2" "#222222" . pad 
-			  ppCurrent  = dzenColor "#806E62" "#CDD4B2"  . pad
-            , ppHidden   = dzenColor "#CDD4B2" "#806E62"  . pad
+			  ppCurrent  = dzenColor dzenColor5 dzenColor2  . pad
+            , ppHidden   = dzenColor dzenColor2 dzenColor4 . pad
             , ppUrgent   = dzenColor "#D8332C" "#2E2611" . pad
-            , ppHiddenNoWindows = dzenColor "#444444"  "#806E62" . pad
+            , ppHiddenNoWindows = dzenColor dzenColor4  dzenColor5 . pad
             , ppWsSep    = "^fg(black)^r(1x17)"
             , ppSep      = "^fg(black)^r(1x17)"
-            , ppLayout   = dzenColor "#CDD4B2" "#806E62" .
+            , ppLayout   = dzenColor dzenColor2 dzenColor5 .
                            (\ x -> fill (case x of
                        "Tabbed Bottom Simplest"    -> icon "tabbed.xbm"
                        "Tall"               -> icon "tall.xbm"
                        "Mirror Tall"        -> icon "mtall.xbm"
-                       "SimplestFloat"      -> icon "float.xbm"	
+                       "SimplestFloat"      -> icon "float.xbm"
                        "Full"               -> icon "full.xbm"
-                       "gimp"               -> icon "full.xbm"
+                       "gimp"               -> icon "gimp.xbm"
                        _                    -> pad x) 4)
-	        , ppTitle	= ("^fn(xft:Sans:pixelsize=11:weight=regular:width=semicondensed:dpi=96:hinting=true:hintstyle=hintslight:antialias=true:rgba=rgb:lcdfilter=lcdlight)^fg(#F6F7F1) " ++) . dzenEscape
+	        , ppTitle	= ("^fn(xft:Sans:pixelsize=11:weight=regular:width=semicondensed)^fg(#D0EFF3) " ++) . dzenEscape
             , ppOutput   = hPutStrLn h
             }
     where
       icon h = "^i(/home/edgar/dzen_bitmaps/" ++ h ++ ")"
       fill :: String -> Int -> String
       fill h i = "^ca(1,xdotool key alt+space)^p(" ++ show i ++ ")" ++ h ++ "^p(" ++ show i ++ ")^ca()"
--- Numberpile-12
-myStatusBar = "dzen2 -fn 'Numberpile-12' -bg '#806E62' -h 17 -ta l -w 800 -e ''"
--- myStatusBar = "dzen2 -ta l -w 800"
--- secondDzenCommand = "date | dzen2 -ta r -x 800 -p"
-secondDzenCommand = "conky -c ~/.xdzenconky | dzen2 -fn " ++ appFontXft ++ " -bg '#806E62' -h 17 -ta r -w 1280 -e '' -x 800"  
--- -*-dina-*-r-*-*-14-*-*-*-*-*-iso8859-1
+
+-- xft:Sans:pixelsize=11:width=semicondensed:hintstyle=hint
+
+myStatusBar = "dzen2 -fn " ++ appFontXft ++ " -bg '#0D171A' -h 17 -ta l -w 800 -e ''"
+secondDzenCommand = "conky -c ~/.xdzenconky | dzen2 -fn " ++ appFontXft ++ " -bg '#0D171A' -h 17 -ta r -w 1280 -e '' -x 800"  
+
 main = do din <- spawnPipe myStatusBar
 	  spawnPipe secondDzenCommand     
-          xmonad $  withUrgencyHook dzenUrgencyHook { args = [ "-fn", "Dina-10", "-x", "420", "-w", "350", "-fg", "orange", "-bg", "#222222" ] }
+          xmonad $  withUrgencyHook dzenUrgencyHook { args = [ "-fn",  "Dina-10" , "-x", "420", "-w", "350", "-fg", "orange", "-bg", "#222222" ] }
 					defaultConfig {
           terminal           = "urxvtc",
           focusFollowsMouse  = True,
@@ -190,8 +183,8 @@ main = do din <- spawnPipe myStatusBar
           numlockMask        = mod2Mask,
 
           workspaces         = myWorkspaces,
-          normalBorderColor  = "#CDD4B2",
-          focusedBorderColor = "white",        
+          normalBorderColor  = dzenColor4,
+          focusedBorderColor = dzenColor2,        
      
           -- key bindings
           keys               = myKeys,
