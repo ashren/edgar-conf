@@ -1,0 +1,11 @@
+background no
+out_to_console yes
+update_interval 3
+total_run_times 0
+uppercase no 
+use_spacer none
+color1 F9BD81
+color2 D84739
+
+TEXT
+^fg(black)^r(1x17) ^fg(#F9BD81)$freq_g ^fg(#D84739)^i(/home/edgar/dzen_bitmaps/xbm8x8/net_down_01.xbm) ^fg(#F9BD81)${downspeed eth0} ^fg(#D84739)^i(/home/edgar/dzen_bitmaps/xbm8x8/net_up_01.xbm) ^fg(#F9BD81)${upspeed eth0} ^fg(#D84739)^i(/home/edgar/dzen_bitmaps/xbm8x8/diskette.xbm) ^fg(#F9BD81)${fs_used /} ^fg(#D84739)^i(/home/edgar/dzen_bitmaps/xbm8x8/mem.xbm)^fg(#F9BD81) ${memperc}% ^fg(#D84739)^i(/home/edgar/dzen_bitmaps/xbm8x8/cpu.xbm)^fg(#F9BD81) C1 ${cpu cpu0}% C2 ${cpu cpu1}% ^fg(#D84739)^i(/home/edgar/dzen_bitmaps/xbm8x8/temp.xbm) ^fg(#F9BD81)${acpitemp}°C ^fg(#D84739)^i(/home/edgar/dzen_bitmaps/xbm8x8/clock.xbm) ^fg(#F9BD81)${time %H:%M}
