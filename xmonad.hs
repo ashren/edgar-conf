@@ -76,12 +76,24 @@ dzenColor2 :: String
 dzenColor3 :: String
 dzenColor4 :: String
 dzenColor5 :: String
+dzenUrgent :: String
 
-dzenColor1 = "#F5F6F6" -- almost white
-dzenColor2 = "#D0EFF3" -- very light blue
-dzenColor3 = "#84D1E0" -- light blue
-dzenColor4 = "#4690BB" -- blue
-dzenColor5 = "#0D171A" -- dark
+--dzenColor1 = "#F5F6F6" -- almost white
+--dzenColor2 = "#D0EFF3" -- very light blue
+--dzenColor3 = "#84D1E0" -- light blue
+--dzenColor4 = "#4690BB" -- blue
+--dzenColor5 = "#0D171A" -- dark
+--dzenUrgent = "orange" -- pref. urgent color
+
+dzenColor1 = "#8D7D5B" -- greyish
+dzenColor2 = "#F9BD81" -- skin 
+dzenColor3 = "#794A3A" -- brownish
+dzenColor4 = "#D84739" -- reddish 
+dzenColor5 = "#543532" -- dark
+dzenUrgent = "orange" -- pref. urgent color
+
+appFontXft0 :: String
+appFontXft0 = "saxMono:pixelsize=12"
 
 appFontXft :: String
 appFontXft = concat [ "xft:"
@@ -98,10 +110,10 @@ appFontXft = concat [ "xft:"
 -- Layout Section
 
 tabbedLayout = tabbedBottomAlways shrinkText myTabConfig
-gimpLayout = named "gimp" (tabbedLayout ****||* Full)
+gimpLayout = named "gimp" (tabbedLayout ****||* noBorders Full)
 
 myLayout = avoidStruts  $ 
-    (tabbedLayout ||| noBorders tall ||| Mirror tall ||| Full ||| simplestFloat ||| gimpLayout)
+    (noBorders tabbedLayout ||| noBorders tall ||| Mirror tall ||| noBorders Full ||| noBorders simplestFloat ||| gimpLayout)
      where
          tall      = Tall nmaster delta ratio
          nmaster   = 1
@@ -110,21 +122,21 @@ myLayout = avoidStruts  $
 
 
 myTabConfig = defaultTheme {
-activeColor = dzenColor4
+activeColor = dzenColor2
 ,inactiveColor = dzenColor5
-,urgentColor = "#ffffff"
-,activeBorderColor = dzenColor2
+,urgentColor = "black"
+,activeBorderColor = dzenColor4
 ,inactiveBorderColor = "#594F4F"
 ,activeTextColor = dzenColor5
 ,inactiveTextColor = dzenColor1
-,urgentTextColor = "orange"
+,urgentTextColor = dzenUrgent
 ,fontName = appFontXft
 ,decoHeight = 21
 } 
 
 -- Ws change by leftclick conf starts here:
 myWorkspaces            :: [String]
-myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 0 ["One","Two","Three","Four","Five"]
+myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 0 ["Turn on","Tune in","and","Drop","Out"]
 
   where nWorkspaces n []= map show [1 .. n]
         nWorkspaces n l = init l ++ map show [length l .. n] ++ [last l] 
@@ -142,31 +154,36 @@ myManageHook = composeAll
           where role = stringProperty "WM_WINDOW_ROLE"
 
 myLogHook h = dynamicLogWithPP $ defaultPP {
-			  ppCurrent  = dzenColor dzenColor5 dzenColor2  . pad
-            , ppHidden   = dzenColor dzenColor2 dzenColor4 . pad
-            , ppUrgent   = dzenColor "#D8332C" "#2E2611" . pad
-            , ppHiddenNoWindows = dzenColor dzenColor4  dzenColor5 . pad
+			  ppCurrent  = dzenColor dzenColor3 dzenColor2  . pad
+            , ppHidden   = dzenColor dzenColor4 dzenColor5 . pad
+            , ppUrgent   = dzenColor dzenColor2 dzenColor4 . pad
+            , ppHiddenNoWindows = dzenColor dzenColor1 dzenColor5 . pad
             , ppWsSep    = "^fg(black)^r(1x17)"
             , ppSep      = "^fg(black)^r(1x17)"
-            , ppLayout   = dzenColor dzenColor2 dzenColor5 .
+            , ppLayout   = dzenColor dzenColor4 dzenColor5 .
                            (\ x -> fill (case x of
                        "Tabbed Bottom Simplest"    -> icon "tabbed.xbm"
-                       "Tall"               -> icon "tall.xbm"
-                       "Mirror Tall"        -> icon "mtall.xbm"
-                       "SimplestFloat"      -> icon "float.xbm"
-                       "Full"               -> icon "full.xbm"
-                       "gimp"               -> icon "gimp.xbm"
+                       "Tall"               -> iconb "tall.xbm"
+                       "Mirror Tall"        -> iconc "mtall.xbm"
+                       "SimplestFloat"      -> icond "float.xbm"
+                       "Full"               -> icone "full.xbm"
+                       "gimp"               -> iconf "gimp.xbm"
                        _                    -> pad x) 4)
-	        , ppTitle	= ("^fn(xft:Sans:pixelsize=11:weight=regular:width=semicondensed)^fg(#D0EFF3) " ++) . dzenEscape
+	        , ppTitle	= ("^fn(xft:Sans:pixelsize=11:weight=regular:width=semicondensed)^fg(#F9BD81) " ++) . dzenEscape
             , ppOutput   = hPutStrLn h
             }
     where
+      iconb h = "^fg(blue)^i(/home/edgar/dzen_bitmaps/" ++ h ++ ")"
+      iconc h = "^fg(yellow)^i(/home/edgar/dzen_bitmaps/" ++ h ++ ")"
+      icond h = "^fg(white)^i(/home/edgar/dzen_bitmaps/" ++ h ++ ")"
+      icone h = "^fg(purple)^i(/home/edgar/dzen_bitmaps/" ++ h ++ ")"
+      iconf h = "^fg(green)^i(/home/edgar/dzen_bitmaps/" ++ h ++ ")"
       icon h = "^i(/home/edgar/dzen_bitmaps/" ++ h ++ ")"
       fill :: String -> Int -> String
       fill h i = "^ca(1,xdotool key alt+space)^p(" ++ show i ++ ")" ++ h ++ "^p(" ++ show i ++ ")^ca()"
 
-myStatusBar = "dzen2 -fn " ++ appFontXft ++ " -bg '#0D171A' -h 17 -ta l -w 800 -e ''"
-secondDzenCommand = "conky -c ~/.xdzenconky | dzen2 -fn " ++ appFontXft ++ " -bg '#0D171A' -h 17 -ta r -w 1280 -e '' -x 800"  
+myStatusBar = "dzen2 -fn " ++ appFontXft ++ " -bg '#543532' -h 17 -ta l -w 800 -e ''"
+secondDzenCommand = "conky -c ~/.xdzenconky | dzen2 -fn " ++ appFontXft ++ " -bg '#543532' -h 17 -ta r -w 1280 -e '' -x 800"  
 
 main = do din <- spawnPipe myStatusBar
 	  spawnPipe secondDzenCommand     
@@ -179,7 +196,7 @@ main = do din <- spawnPipe myStatusBar
           numlockMask        = mod2Mask,
 
           workspaces         = myWorkspaces,
-          normalBorderColor  = dzenColor4,
+          normalBorderColor  = dzenColor2,
           focusedBorderColor = dzenColor2,        
      
           -- key bindings
