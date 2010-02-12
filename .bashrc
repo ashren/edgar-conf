@@ -10,9 +10,6 @@ alias vi='vim'
 alias snano='sudo nano'
 alias rscp='rsync -aP --no-whole-file --inplace'
 #ssh aliases
-alias snoc='ssh nx01.ad.noc.nnit.com'
-alias snocy='ssh -Y nx01.ad.noc.nnit.com'
-alias snair='ssh altair.noc.nnit.com'
 alias pacman32="sudo pacman --root /opt/arch32 --cachedir /opt/arch32/var/cache/pacman/pkg --config /opt/arch32/pacman.conf"
 #PS1='[\u@\h \W]\$ '
 #export PS1='\[\033[0;32m\]┌┼─┼─ \[\033[0m\033[0;35m\]\u\[\033[0m\] @ \[\033[0;36m\]\h\[\033[0m\033[0;32m\] ─┤├─ \[\033[0m\]\t \d\[\033[0;32m\] ─┤├─ \[\033[0;34m\]\w\[\033[0;32m\] ─┤ \n\[\033[0;32m\]└┼─\[\033[0m\033[0;32m\]\$\[\033[0m\033[0;32m\]─┤▶\[\033[0m\] '
