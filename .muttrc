@@ -1,5 +1,5 @@
 set spoolfile=imaps://imap.gmail.com/INBOX
-set imap_user=edgar@archlinux.us
+set imap_user=beep@archlinux.us
 set folder=imaps://imap.gmail.com/
 mailboxes =INBOX
 
