@@ -7,6 +7,7 @@ alias ls='ls --color=auto'
 alias pacman='sudo pacman'
 alias svi='sudo vim'
 alias vi='vim'
+alias snoc='ssh nx01.ad.noc.nnit.com'
 alias snano='sudo nano'
 alias rscp='rsync -aP --no-whole-file --inplace'
 #ssh aliases
